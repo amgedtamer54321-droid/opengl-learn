@@ -18,13 +18,18 @@
 #include <stb_image.h>
 using namespace std;
 unsigned int VBO;
+unsigned int EBO;
+
 float incr = 0.0;
 GLuint vao;
 GLuint refColor;
 GLuint fragmentColorLocation;
 unsigned char *imageData;
+unsigned char *imageData2;
 int width, height, nrChannels;
-GLuint texture;
+GLuint texture1;
+GLuint texture2;
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
 }
@@ -33,12 +38,14 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
 }
 void draw() {
-    incr += 1;
-    auto time = glfwGetTime() * incr;
-    glUniform1f(fragmentColorLocation, sin(time));
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+   // glActiveTexture(GL_TEXTURE0);
+   // glBindTexture(GL_TEXTURE_2D, texture1);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    cout<<"-------2344   "<<glGetError()<<endl;
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 string readShader(string path){
@@ -104,45 +111,61 @@ void createShader() {
         glGetProgramInfoLog(program, 512, NULL, info);
         std::cout << "Program link error:\n" << info << '\n';
     }
-    fragmentColorLocation = glGetUniformLocation(program, "color");
-
+    
     glUseProgram(program);
+    
+    fragmentColorLocation = glGetUniformLocation(program, "color");
+    auto textureLocation1 = glGetUniformLocation(program, "texture1");
+    glUniform1i(textureLocation1, 0);
+    auto textureLocation2 = glGetUniformLocation(program, "texture2");
+    glUniform1i(textureLocation2, 1);
 }
 void SendDatatToGL() {
     const float vertices[] = {
-        0.0f, 0.0f, // lower-left corner
-        1.0f, 0.0f, // lower-right corner
-        0.5f, 1.0f // top-center corner
+
+     -0.5f, 0.5f, 0.0f,            1.0f, 0.0f, 0.0f,         1.0f, 1.0f, // top right
+     0.5f, 0.5f, 0.0f,       0.0f, 1.0f, 0.0f,               0.0f, 1.0f, // bottom right
+     0.5f, -0.5f, 0.0f,       0.0f, 0.0f, 1.0f,             0.0f, 0.0f, // bottom left
+    -0.5f, -0.5f, 0.0f,          1.0f, 1.0f, 0.0f,           1.0f, 0.0f // top left
     };
-    const unsigned int indices[] = {
-        // note that we start from 0!
-        0, 1, 2, // first triangle
+    const unsigned int indecies[] ={
+        0, 1, 2, // المثلث الأول (الأيمن السفلي)
+        2, 3, 0  // المثلث الثاني (الأيسر العلوي)
     };
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glGenBuffers(1,&EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indecies), indecies, GL_STATIC_DRAW);
+
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    //glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, (2 * sizeof(float)),
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, (8 * sizeof(float)),
                           (void *)0);
-    //glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, (6 * sizeof(float)),
-                       //   (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, (8 * sizeof(float)), (void *)(3 * sizeof(float)));
+    
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, (8 * sizeof(float)), (void *)(6 * sizeof(float)));
+
     glBindVertexArray(0);
 }
-void initImge(){
-    imageData = stbi_load("download.jpeg", &width, &height, &nrChannels, 0);
-    glGenTextures(1, &texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+void initImge(const char* path,unsigned &usedtexture){
+    int imwidth,imheight,imnrChannels;
+    stbi_set_flip_vertically_on_load(true);
+    auto imdata = stbi_load(path, &imwidth, &imheight, &imnrChannels, 0);
+    glGenTextures(1, &usedtexture);
+    glBindTexture(GL_TEXTURE_2D, usedtexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_UNSIGNED_BYTE, GL_RGB, imageData);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imwidth, imheight, 0 , GL_RGB,GL_UNSIGNED_BYTE, imdata);
     glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(imageData);
+    stbi_image_free(imdata);
 }
 void InitGLFW(GLFWwindow *&window) {
     glfwInit();
@@ -168,7 +191,9 @@ int main(int argc, const char *argv[]) {
     InitGLFW(window);
     glewInit();
     createShader();
-    initImge();
+    initImge("download.jpeg",texture1);
+    initImge("download2.jpg",texture2);
+
     SendDatatToGL();
     while (!glfwWindowShouldClose(window)) {
         glClearColor(1.0, 0, 0, 1);
