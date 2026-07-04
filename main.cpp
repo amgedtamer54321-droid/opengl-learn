@@ -19,6 +19,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include <GLFW/glfw3.h>
+#include "Shader.h"
 
 using namespace std;
 using namespace glm;
@@ -99,76 +100,29 @@ void draw() {
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
-string readShader(string path){
-    ifstream file(path);
-    
-    
-    if (!file.is_open()) {
-        throw runtime_error("Failed to open file: " + path);
-    }
-    
-    stringstream filestream;
-    
-    filestream<<file.rdbuf();
-    file.close();
-    return filestream.str();
-    
-}
+
 
 void createShader() {
-    unsigned int vertexShader;
-        unsigned int fragmentShader;
-        auto program = glCreateProgram();
-        vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        
-        // Fix: Keep both strings alive separately
-        string vertexSourceStr = readShader("VertexShader.glsl");
-        string fragmentSourceStr = readShader("FragmentShader.glsl");
-        
-        const char* vertexShaderSource = vertexSourceStr.c_str();
-        const char* fragmentShaderSource = fragmentSourceStr.c_str();
-        
-        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
 
-        glCompileShader(vertexShader);
-        glCompileShader(fragmentShader);
+    Shader shader;
+    shader.readShaders(
+            "VertexShader.glsl",
+            "FragmentShader.glsl"
+            );
 
-    char info[512];
-    int Sucess;
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &Sucess);
-    if (!Sucess) {
-        glGetShaderInfoLog(vertexShader, 512, 0, info);
-        cout << "vertex Shader info Log : \n" << info << "\n";
-    }
-    Sucess = 0;
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &Sucess);
-    if (!Sucess) {
-        glGetShaderInfoLog(fragmentShader, 512, 0, info);
-        cout << "fragment Shader info Log : \n" << info << "\n";
-    }
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
+    shader.run();
 
-    glLinkProgram(program);
-    Sucess = 0;
-    glGetProgramiv(program, GL_LINK_STATUS, &Sucess);
-    if (!Sucess) {
-        glGetProgramInfoLog(program, 512, NULL, info);
-        std::cout << "Program link error:\n" << info << '\n';
-    }
-    
-    glUseProgram(program);
    // matLocation = glGetUniformLocation(program,"trans");
    // fragmentColorLocation = glGetUniformLocation(program, "color");
-    auto textureLocation1 = glGetUniformLocation(program, "texture1");
+    auto textureLocation1 = shader.getUniformLocation(
+    "texture1"
+            );
     glUniform1i(textureLocation1, 0);
 //    auto textureLocation2 = glGetUniformLocation(program, "texture2");
 //    glUniform1i(textureLocation2, 1);
-    viewLoc = glGetUniformLocation(program,"view");
-    modelLoc = glGetUniformLocation(program,"model");
-    preLoc = glGetUniformLocation(program,"pre");
+    viewLoc = shader.getUniformLocation("view");
+    modelLoc =shader.getUniformLocation("model");
+    preLoc = shader.getUniformLocation("pre");
 
 
 
