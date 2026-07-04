@@ -9,16 +9,17 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 #include "GL/glew.h"
-#include "vec3.hpp"
+#include "glm/vec3.hpp"
 #include <fstream>
-#include <glfw3.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <stb_image.h>
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-#include <gtc/type_ptr.hpp>
+#include "stb_image.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+#include <GLFW/glfw3.h>
+
 using namespace std;
 using namespace glm;
 
