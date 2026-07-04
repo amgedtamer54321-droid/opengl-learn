@@ -3,7 +3,7 @@
 
 #include <GL/glew.h>
 #include <string>
-
+const std::string currentPath = R"(C:\Users\mostafa\CLionProjects\untitled37\)";
 class Shader
 {
 private:
@@ -11,13 +11,13 @@ private:
     GLuint fragmentShader;
     GLuint programID;
 
-    const char* vertexShaderSource;
-    const char* fragmentShaderSource;
+    std::string vertexShaderSource;
+    std::string fragmentShaderSource;
 
     char info[512];
 
     void createProgram();
-    std::string readShader(std::string path);
+    std::string readShader(const std::string& path);
     bool checkVertexShader();
     bool checkFragmentShader();
     bool checkProgramAttachment();

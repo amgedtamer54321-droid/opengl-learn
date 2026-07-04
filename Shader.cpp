@@ -20,21 +20,18 @@ using namespace std;
         fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     }
 
-    string  Shader::readShader(string path){
-        ifstream file(path);
+std::string Shader::readShader(const std::string& path)
+{
+    std::ifstream file(path);
 
+    if (!file.is_open())
+        throw std::runtime_error("Cannot open " + path);
 
-        if (!file.is_open()) {
-            throw runtime_error("Failed to open file: " + path);
-        }
+    std::stringstream ss;
+    ss << file.rdbuf();
 
-        stringstream filestream;
-
-        filestream<<file.rdbuf();
-        file.close();
-        return filestream.str();
-
-    }
+    return ss.str();
+}
 
     bool  Shader::checkVertexShader(){
         int Sucess;
@@ -76,11 +73,12 @@ using namespace std;
                       string fragmentShaderPath
                      ){
 
-        bool isSucess = false;
+        bool isSucess;
         try {
             fragmentShaderSource = readShader(fragmentShaderPath).c_str();
 
             vertexShaderSource = readShader(vertexShaderPath).c_str();
+
             isSucess = true;
         }catch (exception e){
             isSucess = false;
@@ -91,9 +89,10 @@ using namespace std;
     void Shader::run() {
 
         createProgram();
-
-        glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+        const char* vertexSrc = vertexShaderSource.c_str();
+        const char* fragmentSrc = fragmentShaderSource.c_str();
+        glShaderSource(vertexShader, 1, &vertexSrc, nullptr);
+        glShaderSource(fragmentShader, 1, &fragmentSrc, NULL);
 
         glCompileShader(vertexShader);
         glCompileShader(fragmentShader);

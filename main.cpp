@@ -56,15 +56,21 @@ void makeTransformation(){
     glUniformMatrix4fv(matLocation,1, GL_FALSE, glm::value_ptr(trans));
 
 }
-void animaterotate(){
-    glm::mat4 model = glm::mat4(1.0f);
-    float e = abs(sin(glfwGetTime()));
-    model = glm::rotate(model, radians(90.0f * e ) , vec3(1.0f,1.0f,1.0f));
-
+void setModel(mat4 model){
     glUniformMatrix4fv(modelLoc,
                        1,
                        GL_FALSE,
                        glm::value_ptr(model));
+}
+void animaterotate(){
+    glm::mat4 model = glm::mat4(1.0f);
+    float e = abs(sin(glfwGetTime()));
+    model = glm::rotate(model, radians(90.0f * e ) , vec3(1.0f,1.0f,1.0f));
+    glUniformMatrix4fv(modelLoc,
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(model));
+
 }
 void trasltetoz(){
     glm::mat4 view = glm::mat4(1.0f);
@@ -96,8 +102,26 @@ void draw() {
     glBindTexture(GL_TEXTURE_2D, texture1);
 //    glActiveTexture(GL_TEXTURE1);
 //    glBindTexture(GL_TEXTURE_2D, texture2);
-    
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    vector<vec3> postions = {
+            glm::vec3( 0.0f,  0.0f,  0.0f),
+            glm::vec3( 2.0f,  5.0f, -15.0f),
+            glm::vec3(-1.5f, -2.2f, -2.5f),
+            glm::vec3(-3.8f, -2.0f, -12.3f),
+            glm::vec3( 2.4f, -0.4f, -3.5f),
+            glm::vec3(-1.7f,  3.0f, -7.5f),
+            glm::vec3( 1.3f, -2.0f, -2.5f),
+            glm::vec3( 1.5f,  2.0f, -2.5f),
+            glm::vec3( 1.5f,  0.2f, -1.5f),
+            glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
+    for (int i = 0; i < postions.size(); ++i) {
+        auto model = mat4 (1);
+        auto moved = translate(model,postions[i]);
+        setModel(moved);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+
 }
 
 
@@ -106,8 +130,8 @@ void createShader() {
 
     Shader shader;
     shader.readShaders(
-            "VertexShader.glsl",
-            "FragmentShader.glsl"
+            currentPath +"VertexShader.glsl",
+            currentPath+"FragmentShader.glsl"
             );
 
     shader.run();
@@ -192,10 +216,10 @@ void SendDatatToGL() {
 
     glBindVertexArray(0);
 }
-void initImge(const char* path, unsigned &usedtexture){
+void initImge(const string  path, unsigned &usedtexture){
     int imwidth, imheight, imnrChannels;
     stbi_set_flip_vertically_on_load(true);
-    auto imdata = stbi_load(path, &imwidth, &imheight, &imnrChannels, 0);
+    auto imdata = stbi_load(path.c_str(), &imwidth, &imheight, &imnrChannels, 0);
     
     if (!imdata) {
         std::cout << "Failed to load texture: " << path << std::endl;
@@ -249,7 +273,8 @@ int main(int argc, const char *argv[]) {
     InitGLFW(window);
     glewInit();
     createShader();
-    initImge("download.jpeg",texture1);
+    string imagePath = currentPath + "download.jpeg";
+    initImge(imagePath,texture1);
    // initImge("download2.jpg",texture2);
     SendDatatToGL();
     trasltetoz();
@@ -257,7 +282,7 @@ int main(int argc, const char *argv[]) {
     while (!glfwWindowShouldClose(window)) {
         glClearColor(1.0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        animaterotate();
+        //animaterotate();
 
         draw();
         processInput(window);
