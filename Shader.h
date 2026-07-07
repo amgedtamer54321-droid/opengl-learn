@@ -3,7 +3,6 @@
 
 #include <GL/glew.h>
 #include <string>
-const std::string currentPath = R"(C:\Users\mostafa\CLionProjects\untitled37\)";
 class Shader
 {
 private:
