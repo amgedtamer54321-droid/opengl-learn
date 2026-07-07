@@ -9,17 +9,18 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 #include "GL/glew.h"
-#include "glm/vec3.hpp"
+#include "vec3.hpp"
 #include <fstream>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include "stb_image.h"
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-#include <GLFW/glfw3.h>
+#include "glm.hpp"
+#include "gtc/matrix_transform.hpp"
+#include "gtc/type_ptr.hpp"
+#include <glfw3.h>
 #include "Shader.h"
+#include "mySystemPath.h"
 
 using namespace std;
 using namespace glm;
@@ -41,12 +42,35 @@ GLint preLoc;
 GLint viewLoc;
 GLint modelLoc;
 
+const float speed = .5f;
+const vec3 upVector = vec3(0,1,0);
+const vec3 forntVector = vec3(0,0,-1);
+vec3 cameraPos = vec3(0,0,3);
+float radus =0;
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window, GLFW_KEY_A)==GLFW_PRESS) {
+        cameraPos -= normalize(cross(forntVector,upVector))* speed;;
+    }
+    if (glfwGetKey(window, GLFW_KEY_D)==GLFW_PRESS) {
+        cameraPos += normalize(cross(forntVector,upVector))* speed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_W)==GLFW_PRESS) {
+        cameraPos += upVector * speed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S)==GLFW_PRESS) {
+        cameraPos -= upVector * speed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT)==GLFW_PRESS) {
+        radus -= 2.0f;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT)==GLFW_PRESS) {
+        radus += 2.0f;
+    }
 }
 void makeTransformation(){
     glm::mat4 trans = glm::mat4(1.0f);
@@ -56,8 +80,16 @@ void makeTransformation(){
     glUniformMatrix4fv(matLocation,1, GL_FALSE, glm::value_ptr(trans));
 
 }
-void setModel(mat4 model){
-    glUniformMatrix4fv(modelLoc,
+void setModel(mat4 model, string type){
+    GLuint refl;
+    if(type == "model")
+        refl= modelLoc;
+    else if(type == "view")
+        refl = viewLoc;
+        else
+        refl =preLoc;
+    
+    glUniformMatrix4fv( refl ,
                        1,
                        GL_FALSE,
                        glm::value_ptr(model));
@@ -115,10 +147,14 @@ void draw() {
             glm::vec3( 1.5f,  0.2f, -1.5f),
             glm::vec3(-1.3f,  1.0f, -1.5f)
     };
+    mat4 viewMat = mat4(1) ;
+    auto look = lookAt(cameraPos, cameraPos + forntVector, upVector);
+    auto roted = rotate(look, radians(radus), vec3(0,1,0));
+    setModel(roted, "view");
     for (int i = 0; i < postions.size(); ++i) {
         auto model = mat4 (1);
         auto moved = translate(model,postions[i]);
-        setModel(moved);
+        setModel(moved,"model");
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 
@@ -268,7 +304,11 @@ void InitGLFW(GLFWwindow *&window) {
 int main(int argc, const char *argv[]) {
     
 
-   
+    std::filesystem::path current_path = std::filesystem::current_path();
+        
+        // Print the path
+        std::cout << "Current path: " << current_path << std::endl;
+
     GLFWwindow *window;
     InitGLFW(window);
     glewInit();
