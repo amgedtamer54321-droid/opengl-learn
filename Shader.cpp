@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include <sstream>
-#include <GLFW/glfw3.h>
+#include <glfw3.h>
 
 using namespace std;
 
